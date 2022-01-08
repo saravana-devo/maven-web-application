@@ -1,0 +1,69 @@
+pipeline{
+    
+agent any
+
+triggers{
+    pollSCM('* * * * *')
+    //pipelineTriggers([githubPush()])
+    //pipelineTriggers([cron('* * * * *')])
+}
+options{
+timestamps()
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5'))
+}
+
+tools{
+    maven "maven3.6.3"
+}
+
+stages{
+    
+    stage('checkoutcode'){
+ steps{
+     git branch: 'development', credentialsId: '82257c25-d7b6-47f1-977c-79c0cca678c3', url: 'https://github.com/saravana-devo/maven-web-application.git'
+ }   
+}
+
+   stage('Build'){
+       steps{
+           sh "mvn clean package"
+       }
+   } 
+   stage('executesonarqubereport'){
+       steps{
+           sh "mvn clean sonar:sonar"
+       }
+   }
+   stage('upload artifact into nexus'){
+       steps{
+           sh "mvn clean deploy"
+       }
+   }
+   stage('deployappintotomcatserver'){
+       steps{
+            sshagent(['2ac7b344-aadb-4f6d-9b30-7accb27a586e']) {
+            sh "scp -o  StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.39.32:/opt/apache-tomcat-9.0.56/webapps/"
+            }
+       }
+   }
+}
+post{
+    
+    success{
+        emailext body: '''Build is over-success!!
+
+
+Regards,
+saravana
+8801888075''', subject: 'Build is over-success', to: 'saravanakumar8801@gmail.com'
+    }
+    failure{
+        emailext body: '''Build is over-Failure!!
+
+
+Regards,
+saravana
+8801888075''', subject: 'Build is over-Failure', to: 'saravanakumar8801@gmail.com'
+    }
+}
+}
