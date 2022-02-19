@@ -119,6 +119,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.3</version>
 				<configuration>
+					<fork>true<fork>
+						<executable>C:\Program Files\Java\jdk1.8.0_181\bin</executable>
 					<source>${jdk.version}</source>
 					<target>${jdk.version}</target>
 				</configuration>
